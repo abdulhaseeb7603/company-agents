@@ -1,0 +1,122 @@
+import fs from "fs/promises";
+import path from "path";
+import inquirer from "inquirer";
+import ora from "ora";
+import pc from "picocolors";
+import { PaperclipClient } from "../paperclip/client.js";
+import { createHermesHome } from "../generators/hermes-home.js";
+import { fatal } from "../utils/log.js";
+import type { AgentDef } from "../schemas.js";
+
+interface AddAnswers {
+  name: string;
+  slug: string;
+  role: string;
+  toolsets: string[];
+  internetTools: string[];
+  budget: number;
+  heartbeat: string;
+  goals: string;
+}
+
+export async function addCommand(companyId: string): Promise<void> {
+  console.log(`\n  ${pc.bold("Add a new agent")}\n`);
+
+  const answers = await inquirer.prompt<AddAnswers>([
+    {
+      type: "input",
+      name: "name",
+      message: "Agent name:",
+      validate: (v: string) => v.length > 0 || "Name is required",
+    },
+    {
+      type: "input",
+      name: "slug",
+      message: "Agent slug (lowercase, hyphens):",
+      validate: (v: string) => /^[a-z0-9-]+$/.test(v) || "Must be lowercase alphanumeric with hyphens",
+    },
+    {
+      type: "list",
+      name: "role",
+      message: "Role:",
+      choices: ["ceo", "content", "social", "research", "outreach", "engineering", "design", "qa"],
+    },
+    {
+      type: "checkbox",
+      name: "toolsets",
+      message: "Toolsets:",
+      choices: [
+        "terminal", "file", "web", "browser",
+        "code_execution", "vision", "mcp",
+        "image_gen", "tts", "todo", "cronjob", "memory",
+      ],
+      default: ["terminal", "file", "web"],
+    },
+    {
+      type: "checkbox",
+      name: "internetTools",
+      message: "Internet tools:",
+      choices: ["jina", "xreach", "yt-dlp", "searxng"],
+    },
+    {
+      type: "number",
+      name: "budget",
+      message: "Monthly budget (USD cents, 1-500):",
+      default: 100,
+      validate: (v: number) => (v >= 1 && v <= 500) || "Must be between 1 and 500",
+    },
+    {
+      type: "input",
+      name: "heartbeat",
+      message: "Heartbeat cron (e.g. */30 * * * *):",
+      default: "*/30 * * * *",
+    },
+    {
+      type: "input",
+      name: "goals",
+      message: "Goals (comma-separated):",
+      validate: (v: string) => v.trim().length > 0 || "At least one goal is required",
+    },
+  ]);
+
+  const agentDef: AgentDef = {
+    name: answers.name,
+    slug: answers.slug,
+    role: answers.role as AgentDef["role"],
+    toolsets: answers.toolsets as AgentDef["toolsets"],
+    internetTools: answers.internetTools as AgentDef["internetTools"],
+    budget: answers.budget,
+    heartbeat: answers.heartbeat,
+    goals: answers.goals.split(",").map((g) => g.trim()).filter(Boolean),
+  };
+
+  const spinner = ora("Creating agent directory...").start();
+  try {
+    const soulContent = `# Personality\n\nYou are ${agentDef.name}.`;
+    await createHermesHome("./agents", agentDef, "Company", soulContent, {});
+    spinner.succeed(`Created HERMES_HOME at ${path.join("agents", agentDef.slug)}`);
+  } catch (error) {
+    spinner.fail("Failed to create agent directory");
+    fatal(error instanceof Error ? error.message : "Unknown error");
+  }
+
+  const apiSpinner = ora("Registering agent with Paperclip...").start();
+  try {
+    const client = new PaperclipClient("http://localhost:3100", "");
+    const created = await client.createAgent(companyId, {
+      name: agentDef.name,
+      role: agentDef.role,
+      adapterType: "hermes",
+      adapterConfig: {
+        enabledToolsets: agentDef.toolsets,
+      },
+      budgetMonthlyCents: agentDef.budget,
+    });
+    apiSpinner.succeed(`Agent registered: ${pc.bold(created.id)}`);
+  } catch (error) {
+    apiSpinner.fail("Failed to register agent with API");
+    fatal(error instanceof Error ? error.message : "Unknown error");
+  }
+
+  console.log(`\n  ${pc.green("Done!")} Agent ${pc.bold(agentDef.name)} added.\n`);
+}

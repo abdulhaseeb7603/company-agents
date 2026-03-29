@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { initCommand } from "./commands/init.js";
+import { statusCommand } from "./commands/status.js";
+import { listCommand } from "./commands/list.js";
+import { logsCommand } from "./commands/logs.js";
+import { addCommand } from "./commands/add.js";
+import { removeCommand } from "./commands/remove.js";
+import { updateCommand } from "./commands/update.js";
+import { destroyCommand } from "./commands/destroy.js";
+import { doctorCommand } from "./commands/doctor.js";
 
 const program = new Command();
 
@@ -11,8 +19,52 @@ program
 
 program
   .command("init")
-  .description("Setup wizard \u2014 create a new HermesOps project")
+  .description("Setup wizard — create a new HermesOps project")
   .action(initCommand);
+
+program
+  .command("status")
+  .description("Show status of Docker services and Paperclip health")
+  .action(statusCommand);
+
+program
+  .command("list")
+  .argument("<companyId>", "Company ID")
+  .description("List agents for a company")
+  .action(listCommand);
+
+program
+  .command("logs")
+  .argument("<agent>", "Agent slug")
+  .description("Show recent logs for an agent")
+  .action(logsCommand);
+
+program
+  .command("add")
+  .argument("<companyId>", "Company ID")
+  .description("Interactive wizard to add a new agent")
+  .action(addCommand);
+
+program
+  .command("remove")
+  .argument("<slug>", "Agent slug")
+  .description("Remove an agent directory")
+  .action(removeCommand);
+
+program
+  .command("update")
+  .description("Pull latest images and restart services")
+  .action(updateCommand);
+
+program
+  .command("destroy")
+  .description("Destroy all containers, volumes, and data")
+  .action(destroyCommand);
+
+program
+  .command("doctor")
+  .description("Check system health and prerequisites")
+  .action(doctorCommand);
 
 // Default: run init when invoked as npx create-hermesops
 if (process.argv.length <= 2) {
