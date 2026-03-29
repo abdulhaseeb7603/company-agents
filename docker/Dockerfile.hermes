@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl nodejs npm && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Hermes Agent
+RUN pip install --no-cache-dir hermes-agent
+
+# Install DuckDuckGo search (always available)
+RUN pip install --no-cache-dir duckduckgo-search
+
+# Install Agent-Reach tools
+RUN pip install --no-cache-dir \
+    "https://github.com/Panniantong/agent-reach/archive/main.zip"
+RUN agent-reach install --env=auto --safe || true
+
+VOLUME /data/agents
+WORKDIR /data
+ENTRYPOINT ["hermes"]
