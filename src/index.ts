@@ -9,6 +9,7 @@ import { removeCommand } from "./commands/remove.js";
 import { updateCommand } from "./commands/update.js";
 import { destroyCommand } from "./commands/destroy.js";
 import { doctorCommand } from "./commands/doctor.js";
+import { deployCommand } from "./commands/deploy.js";
 
 const program = new Command();
 
@@ -65,6 +66,11 @@ program
   .command("doctor")
   .description("Check system health and prerequisites")
   .action(doctorCommand);
+
+program
+  .command("deploy")
+  .description("Push to VPS via SSH + Caddy auto-SSL")
+  .action(deployCommand);
 
 // Default: run init when invoked as npx create-hermesops
 if (process.argv.length <= 2) {
