@@ -8,9 +8,12 @@ interface ComposeConfig {
 }
 
 export function generateDockerCompose(config: ComposeConfig): string {
+  // Single container: Paperclip + Hermes Agent + adapter all in one.
+  // The hermes-paperclip-adapter calls `hermes` CLI locally, so both
+  // Node (Paperclip) and Python (Hermes) must be in the same container.
   const services: Record<string, unknown> = {
     paperclip: {
-      image: "paperclip-local",
+      image: "company-agents-paperclip",
       build: {
         context: ".",
         dockerfile: "docker/Dockerfile.paperclip",
@@ -22,31 +25,19 @@ export function generateDockerCompose(config: ComposeConfig): string {
         "PAPERCLIP_DEPLOYMENT_MODE=authenticated",
         "PAPERCLIP_PUBLIC_URL=${PUBLIC_URL:-http://localhost:3100}",
         "ANTHROPIC_API_KEY=${LLM_API_KEY:-}",
+        "LLM_API_KEY=${LLM_API_KEY}",
+        "DEFAULT_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}",
+        "HERMES_HOME=/opt/data",
       ],
-      volumes: ["paperclip-data:/paperclip"],
+      volumes: [
+        "paperclip-data:/paperclip",
+        "hermes-data:/opt/data",
+      ],
       healthcheck: {
         test: ["CMD", "curl", "-sf", "http://localhost:3100/api/health"],
         interval: "10s",
         timeout: "5s",
         retries: 5,
-      },
-      networks: ["internal", "dashboard"],
-    },
-    "hermes-worker": {
-      build: {
-        context: ".",
-        dockerfile: "docker/Dockerfile.hermes",
-      },
-      security_opt: ["no-new-privileges:true"],
-      cap_drop: ["ALL"],
-      cap_add: ["NET_RAW"],
-      volumes: ["agent-data:/data/agents", "hermes-tmp:/tmp"],
-      environment: [
-        "LLM_API_KEY=${LLM_API_KEY}",
-        "DEFAULT_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}",
-      ],
-      depends_on: {
-        paperclip: { condition: "service_healthy" },
       },
       networks: ["internal", "llm-egress", "internet-egress"],
     },
@@ -69,7 +60,7 @@ export function generateDockerCompose(config: ComposeConfig): string {
         "./Caddyfile:/etc/caddy/Caddyfile",
         "caddy-data:/data",
       ],
-      networks: ["internal", "dashboard"],
+      networks: ["internal"],
     };
   }
 
@@ -77,14 +68,12 @@ export function generateDockerCompose(config: ComposeConfig): string {
     services,
     networks: {
       internal: { internal: true },
-      dashboard: { driver: "bridge" },
       "llm-egress": { driver: "bridge" },
       "internet-egress": { driver: "bridge" },
     },
     volumes: {
       "paperclip-data": null,
-      "agent-data": null,
-      "hermes-tmp": null,
+      "hermes-data": null,
       ...(config.enableCaddy ? { "caddy-data": null } : {}),
     },
   };

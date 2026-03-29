@@ -17,24 +17,25 @@ describe("generateDockerCompose", () => {
     expect(parsed.services).toBeDefined();
   });
 
-  it("includes paperclip service", () => {
+  it("includes paperclip service with both Paperclip and Hermes", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
     expect(parsed.services.paperclip).toBeDefined();
     expect(parsed.services.paperclip.build.dockerfile).toBe("docker/Dockerfile.paperclip");
+    // Single container includes both Paperclip and Hermes env vars
+    expect(parsed.services.paperclip.environment).toContain("HERMES_HOME=/opt/data");
+    expect(parsed.services.paperclip.environment).toContain("LLM_API_KEY=${LLM_API_KEY}");
   });
 
-  it("includes hermes-worker service", () => {
+  it("uses single container architecture (no separate hermes-worker)", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    expect(parsed.services["hermes-worker"]).toBeDefined();
-    expect(parsed.services["hermes-worker"].build.dockerfile).toBe("docker/Dockerfile.hermes");
+    expect(parsed.services["hermes-worker"]).toBeUndefined();
   });
 
-  it("always includes security options on hermes-worker", () => {
+  it("mounts both paperclip-data and hermes-data volumes", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    const worker = parsed.services["hermes-worker"];
-    expect(worker.security_opt).toContain("no-new-privileges:true");
-    expect(worker.cap_drop).toContain("ALL");
-    expect(worker.cap_add).toContain("NET_RAW");
+    const volumes = parsed.services.paperclip.volumes;
+    expect(volumes).toContain("paperclip-data:/paperclip");
+    expect(volumes).toContain("hermes-data:/opt/data");
   });
 
   it("defines three networks", () => {
@@ -66,8 +67,9 @@ describe("generateDockerCompose", () => {
     expect(parsed.services.paperclip.ports[0]).toContain("${DASHBOARD_PORT:-3100}");
   });
 
-  it("hermes-worker depends on healthy paperclip", () => {
+  it("has healthcheck on paperclip service", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    expect(parsed.services["hermes-worker"].depends_on.paperclip.condition).toBe("service_healthy");
+    expect(parsed.services.paperclip.healthcheck).toBeDefined();
+    expect(parsed.services.paperclip.healthcheck.test).toContain("curl");
   });
 });

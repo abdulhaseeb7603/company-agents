@@ -1,12 +1,38 @@
 FROM node:20-slim
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+
+# System deps needed by Hermes Agent
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl python3 python3-pip python3-venv python3-dev \
+    gcc g++ ripgrep ffmpeg git && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Paperclip + Hermes adapter (Node side)
 RUN npm install -g paperclipai hermes-paperclip-adapter
+
+# Install Hermes Agent (Python side) — the adapter calls `hermes` CLI locally
+RUN pip install --no-cache-dir --break-system-packages \
+    "hermes-agent[all]" \
+    duckduckgo-search
+
+# Install Agent-Reach tools
+RUN pip install --no-cache-dir --break-system-packages \
+    "https://github.com/Panniantong/agent-reach/archive/main.zip" && \
+    agent-reach install --env=auto --safe || true
+
+# Non-root user for embedded Postgres
 RUN useradd -m -s /bin/bash paperclip && \
-    mkdir -p /paperclip && chown -R paperclip:paperclip /paperclip
+    mkdir -p /paperclip /opt/data && \
+    chown -R paperclip:paperclip /paperclip /opt/data
+
 USER paperclip
+
+# Hermes data directory
+ENV HERMES_HOME=/opt/data
+
 VOLUME /paperclip
+VOLUME /opt/data
 EXPOSE 3100
+
 COPY --chown=paperclip:paperclip docker/paperclip-entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
