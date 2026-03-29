@@ -1,0 +1,37 @@
+name: "Lead Generation"
+mission: "Identify, qualify, and nurture potential customers"
+agents:
+  - slug: manager
+    name: "Growth Manager"
+    role: ceo
+    budget: 30
+    heartbeat: "0 9 * * 1-5"
+    toolsets: [terminal, file, web]
+    internetTools: [jina]
+    goals:
+      - "Set weekly lead targets"
+      - "Review pipeline health daily"
+
+  - slug: prospector
+    name: "Lead Prospector"
+    role: research
+    budget: 60
+    heartbeat: "10 8,11,14,17 * * 1-5"
+    toolsets: [terminal, file, web, browser]
+    internetTools: [xreach, jina]
+    reportsTo: manager
+    goals:
+      - "Find 20 qualified leads per week"
+      - "Research target companies"
+
+  - slug: outreach
+    name: "Outreach Specialist"
+    role: outreach
+    budget: 40
+    heartbeat: "30 9,14 * * 1-5"
+    toolsets: [terminal, file, web, image_gen, todo]
+    internetTools: [jina]
+    reportsTo: manager
+    goals:
+      - "Send personalized outreach messages"
+      - "Follow up on warm leads within 24 hours"

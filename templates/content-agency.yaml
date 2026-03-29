@@ -1,0 +1,39 @@
+name: "Content Agency"
+mission: "Create high-quality content that drives engagement and revenue"
+agents:
+  - slug: director
+    name: "Agency Director"
+    role: ceo
+    budget: 25
+    heartbeat: "0 9 * * 1-5"
+    toolsets: [terminal, file, web]
+    internetTools: [jina]
+    goals:
+      - "Review all content before publication"
+      - "Maintain brand consistency across channels"
+      - "Report weekly engagement metrics"
+
+  - slug: writer
+    name: "Content Strategist"
+    role: content
+    budget: 80
+    heartbeat: "20 8,12,16 * * 1-5"
+    toolsets: [terminal, file, web, browser, image_gen, tts]
+    internetTools: [jina]
+    reportsTo: director
+    goals:
+      - "Produce 3 blog posts per week"
+      - "Research trending topics in target industry"
+
+  - slug: social
+    name: "Social Media Manager"
+    role: social
+    budget: 40
+    heartbeat: "40 9,13,17 * * 1-5"
+    toolsets: [terminal, file, web, browser, image_gen, tts]
+    internetTools: [xreach, jina]
+    reportsTo: director
+    goals:
+      - "Post 2x daily on Twitter"
+      - "Monitor brand mentions and respond"
+      - "Grow follower count by 10% monthly"

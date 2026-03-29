@@ -1,0 +1,37 @@
+name: "Research Firm"
+mission: "Deliver actionable market intelligence and competitive analysis"
+agents:
+  - slug: lead
+    name: "Research Director"
+    role: ceo
+    budget: 25
+    heartbeat: "0 9 * * 1-5"
+    toolsets: [terminal, file, web]
+    internetTools: [jina]
+    goals:
+      - "Coordinate research priorities"
+      - "Review all reports before delivery"
+
+  - slug: analyst
+    name: "Market Analyst"
+    role: research
+    budget: 80
+    heartbeat: "15 */2 * * 1-5"
+    toolsets: [terminal, file, web, browser, vision]
+    internetTools: [jina]
+    reportsTo: lead
+    goals:
+      - "Produce daily market briefings"
+      - "Track competitor movements"
+
+  - slug: writer
+    name: "Report Writer"
+    role: content
+    budget: 50
+    heartbeat: "45 10,15 * * 1-5"
+    toolsets: [terminal, file, web, image_gen]
+    internetTools: [jina]
+    reportsTo: lead
+    goals:
+      - "Draft weekly intelligence reports"
+      - "Maintain research database"
