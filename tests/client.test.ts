@@ -12,7 +12,7 @@ describe("PaperclipClient", () => {
   it("sends Authorization header on all requests", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ status: "ok" }),
+      text: () => Promise.resolve(JSON.stringify({ status: "ok" })),
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -31,7 +31,7 @@ describe("PaperclipClient", () => {
   it("uses correct path for agent keys", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ key: "ak-123" }),
+      text: () => Promise.resolve(JSON.stringify({ key: "ak-123" })),
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -61,7 +61,7 @@ describe("PaperclipClient", () => {
       .mockRejectedValueOnce(new Error("ECONNREFUSED"))
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ status: "ok" }),
+        text: () => Promise.resolve(JSON.stringify({ status: "ok" })),
       });
     vi.stubGlobal("fetch", mockFetch);
 

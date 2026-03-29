@@ -4,12 +4,12 @@ import { generateEnv } from "../src/generators/env.js";
 describe("generateEnv", () => {
   it("includes LLM_API_KEY", () => {
     const output = generateEnv({ apiKey: "sk-test-123", model: "anthropic/claude-sonnet-4", dashboardPort: 3100 });
-    expect(output).toContain("LLM_API_KEY=sk-test-123");
+    expect(output).toContain('LLM_API_KEY="sk-test-123"');
   });
 
   it("includes DEFAULT_MODEL", () => {
     const output = generateEnv({ apiKey: "sk-test", model: "anthropic/claude-sonnet-4", dashboardPort: 3100 });
-    expect(output).toContain("DEFAULT_MODEL=anthropic/claude-sonnet-4");
+    expect(output).toContain('DEFAULT_MODEL="anthropic/claude-sonnet-4"');
   });
 
   it("includes DASHBOARD_PORT", () => {
@@ -19,7 +19,7 @@ describe("generateEnv", () => {
 
   it("includes PUBLIC_URL when provided", () => {
     const output = generateEnv({ apiKey: "sk-test", model: "test", dashboardPort: 3100, publicUrl: "https://mysite.com" });
-    expect(output).toContain("PUBLIC_URL=https://mysite.com");
+    expect(output).toContain('PUBLIC_URL="https://mysite.com"');
   });
 
   it("does not include secrets in comments", () => {

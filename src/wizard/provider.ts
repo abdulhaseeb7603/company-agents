@@ -1,4 +1,5 @@
 import inquirer from "inquirer";
+import { fatal } from "../utils/log.js";
 
 const MODELS: Record<string, string[]> = {
   openrouter: [
@@ -46,12 +47,17 @@ export async function promptProvider(): Promise<{
     },
   ]);
 
+  const modelChoices = MODELS[provider] ?? [];
+  if (modelChoices.length === 0) {
+    fatal(`No models configured for provider "${provider}". Check your provider configuration.`);
+  }
+
   const { model } = await inquirer.prompt([
     {
       type: "list",
       name: "model",
       message: "Model:",
-      choices: MODELS[provider] ?? [],
+      choices: modelChoices,
     },
   ]);
 

@@ -3,10 +3,11 @@ import pc from "picocolors";
 import { fatal } from "../utils/log.js";
 
 export function logsCommand(agent: string): void {
-  console.log(pc.bold(`\nLogs for agent: ${agent}\n`));
+  const safeSlug = agent.replace(/[^a-z0-9-]/gi, "");
+  console.log(pc.bold(`\nLogs for agent: ${safeSlug}\n`));
 
   const result = shelljs.exec(
-    `docker compose logs hermes-worker --tail 100 2>&1 | grep -i "${agent}"`,
+    `docker compose logs hermes-worker --tail 100 2>&1 | grep -i "${safeSlug}"`,
     { silent: true }
   );
 

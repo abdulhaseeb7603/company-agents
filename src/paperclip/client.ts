@@ -49,7 +49,9 @@ export class PaperclipClient {
           throw error;
         }
 
-        return await response.json() as T;
+        const text = await response.text();
+        if (!text) return undefined as unknown as T;
+        return JSON.parse(text) as T;
       } catch (error) {
         if (error instanceof Error && (error as unknown as Record<string, unknown>).status) {
           throw error;

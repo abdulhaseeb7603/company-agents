@@ -9,14 +9,20 @@ interface SeedResult {
 function topologicalSort(agents: CompanyTemplate["agents"]): CompanyTemplate["agents"] {
   const sorted: CompanyTemplate["agents"] = [];
   const visited = new Set<string>();
+  const visiting = new Set<string>();
 
   function visit(slug: string) {
     if (visited.has(slug)) return;
+    if (visiting.has(slug)) {
+      throw new Error(`Circular dependency detected: agent "${slug}" forms a cycle in reportsTo`);
+    }
     const agent = agents.find(a => a.slug === slug);
     if (!agent) return;
+    visiting.add(slug);
     if (agent.reportsTo && !visited.has(agent.reportsTo)) {
       visit(agent.reportsTo);
     }
+    visiting.delete(slug);
     visited.add(slug);
     sorted.push(agent);
   }

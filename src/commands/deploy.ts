@@ -6,12 +6,22 @@ import pc from "picocolors";
 import { generateCaddyfile } from "../generators/caddyfile.js";
 import { fatal } from "../utils/log.js";
 
+function assertSafeShellArg(val: string, name: string): void {
+  if (/[;&|`$(){}[\]<>!#"'\\]/.test(val)) {
+    fatal(`${name} contains invalid characters`);
+  }
+}
+
 export async function deployCommand(): Promise<void> {
   const answers = await inquirer.prompt([
     { type: "input", name: "host", message: "SSH host (user@host):" },
     { type: "input", name: "keyPath", message: "SSH key path:", default: "~/.ssh/id_rsa" },
     { type: "input", name: "domain", message: "Domain name (for SSL):" },
   ]);
+
+  assertSafeShellArg(answers.host, "SSH host");
+  assertSafeShellArg(answers.keyPath, "SSH key path");
+  assertSafeShellArg(answers.domain, "Domain name");
 
   const testSpinner = ora("Testing SSH connection...").start();
   const sshTest = shelljs.exec(
@@ -36,7 +46,7 @@ export async function deployCommand(): Promise<void> {
 
   if (rsyncResult.code !== 0) {
     syncSpinner.fail("Rsync failed");
-    fatal(rsyncResult.stderr);
+    fatal(rsyncResult.stderr || "Rsync exited with a non-zero status code");
   }
   syncSpinner.succeed("Files synced");
 
@@ -48,7 +58,7 @@ export async function deployCommand(): Promise<void> {
 
   if (deployResult.code !== 0) {
     deploySpinner.fail("Remote deploy failed");
-    fatal(deployResult.stderr);
+    fatal(deployResult.stderr || "Remote deploy exited with a non-zero status code");
   }
   deploySpinner.succeed("Services running on remote");
 

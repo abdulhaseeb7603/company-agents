@@ -32,6 +32,7 @@ export async function removeCommand(slug: string): Promise<void> {
   try {
     await fs.rm(agentDir, { recursive: true, force: true });
     spinner.succeed(`Removed agent directory: ${agentDir}`);
+    console.log(pc.yellow(`\n  Note: The agent "${slug}" may still exist in Paperclip.\n  Use the Paperclip dashboard to fully remove it from the API.\n`));
   } catch (error) {
     spinner.fail("Failed to remove agent directory");
     fatal(error instanceof Error ? error.message : "Unknown error");

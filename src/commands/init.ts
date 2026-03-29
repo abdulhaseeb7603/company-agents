@@ -38,7 +38,7 @@ export async function initCommand(): Promise<void> {
     apiKey,
     model,
     dashboardPort: 3100,
-    publicUrl: deployTarget === "vps" ? undefined : "http://localhost:3100",
+    publicUrl: deployTarget === "vps" ? "http://localhost:3100" : "http://localhost:3100",
   });
   await fs.writeFile(".env", envContent, "utf-8");
 
@@ -63,12 +63,16 @@ export async function initCommand(): Promise<void> {
       research: "researcher.soul.md",
       outreach: "outreach.soul.md",
     };
-    const soulFile = agent.soulTemplate ?? roleMap[agent.role] ?? "ceo.soul.md";
+    const soulFile = agent.soulTemplate ?? roleMap[agent.role];
     let soulContent: string;
-    try {
-      soulContent = await fs.readFile(path.join(personasDir, soulFile), "utf-8");
-    } catch {
-      soulContent = `# Personality\n\nYou are ${agent.name} at {{company_name}}.`;
+    if (soulFile) {
+      try {
+        soulContent = await fs.readFile(path.join(personasDir, soulFile), "utf-8");
+      } catch {
+        soulContent = `# Personality\n\nYou are ${agent.name}, the ${agent.role} at {{company_name}}.`;
+      }
+    } else {
+      soulContent = `# Personality\n\nYou are ${agent.name}, the ${agent.role} at {{company_name}}.`;
     }
     await createHermesHome("./agents", agent, template.name, soulContent, {
       model,

@@ -8,6 +8,20 @@ import { createHermesHome } from "../generators/hermes-home.js";
 import { fatal } from "../utils/log.js";
 import type { AgentDef } from "../schemas.js";
 
+async function readEnvDefaults(): Promise<Record<string, string>> {
+  try {
+    const content = await fs.readFile(".env", "utf-8");
+    const defaults: Record<string, string> = {};
+    for (const line of content.split("\n")) {
+      const match = line.match(/^([A-Z_]+)="?([^"]*)"?$/);
+      if (match) defaults[match[1]] = match[2];
+    }
+    return defaults;
+  } catch {
+    return {};
+  }
+}
+
 interface AddAnswers {
   name: string;
   slug: string;
@@ -21,6 +35,17 @@ interface AddAnswers {
 
 export async function addCommand(companyId: string): Promise<void> {
   console.log(`\n  ${pc.bold("Add a new agent")}\n`);
+
+  const envDefaults = await readEnvDefaults();
+
+  const { companyName } = await inquirer.prompt<{ companyName: string }>([
+    {
+      type: "input",
+      name: "companyName",
+      message: "Company name:",
+      validate: (v: string) => v.length > 0 || "Company name is required",
+    },
+  ]);
 
   const answers = await inquirer.prompt<AddAnswers>([
     {
@@ -61,7 +86,7 @@ export async function addCommand(companyId: string): Promise<void> {
     {
       type: "number",
       name: "budget",
-      message: "Monthly budget (USD cents, 1-500):",
+      message: "Monthly budget (USD dollars, 1-500):",
       default: 100,
       validate: (v: number) => (v >= 1 && v <= 500) || "Must be between 1 and 500",
     },
@@ -93,7 +118,10 @@ export async function addCommand(companyId: string): Promise<void> {
   const spinner = ora("Creating agent directory...").start();
   try {
     const soulContent = `# Personality\n\nYou are ${agentDef.name}.`;
-    await createHermesHome("./agents", agentDef, "Company", soulContent, {});
+    await createHermesHome("./agents", agentDef, companyName, soulContent, {
+      model: envDefaults["DEFAULT_MODEL"],
+      provider: envDefaults["LLM_PROVIDER"],
+    });
     spinner.succeed(`Created HERMES_HOME at ${path.join("agents", agentDef.slug)}`);
   } catch (error) {
     spinner.fail("Failed to create agent directory");
@@ -110,7 +138,7 @@ export async function addCommand(companyId: string): Promise<void> {
       adapterConfig: {
         enabledToolsets: agentDef.toolsets,
       },
-      budgetMonthlyCents: agentDef.budget,
+      budgetMonthlyCents: agentDef.budget * 100,
     });
     apiSpinner.succeed(`Agent registered: ${pc.bold(created.id)}`);
   } catch (error) {
