@@ -1,7 +1,12 @@
 FROM node:20-slim
 RUN apt-get update && apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
-RUN npm install -g paperclip hermes-paperclip-adapter
+RUN npm install -g paperclipai hermes-paperclip-adapter
+RUN useradd -m -s /bin/bash paperclip && \
+    mkdir -p /paperclip && chown -R paperclip:paperclip /paperclip
+USER paperclip
 VOLUME /paperclip
 EXPOSE 3100
-ENTRYPOINT ["paperclip"]
+COPY --chown=paperclip:paperclip docker/paperclip-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

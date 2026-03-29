@@ -54,7 +54,7 @@ function printResult(result: CheckResult): void {
 }
 
 export async function doctorCommand(): Promise<void> {
-  console.log(`\n  ${pc.bold("HermesOps Doctor")}\n`);
+  console.log(`\n  ${pc.bold("Company Agents Doctor")}\n`);
 
   const dockerCheck = checkDocker();
   printResult(dockerCheck);

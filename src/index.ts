@@ -14,13 +14,13 @@ import { deployCommand } from "./commands/deploy.js";
 const program = new Command();
 
 program
-  .name("hermesops")
+  .name("company-agents")
   .description("Deploy Hermes Agent as business employees in Paperclip")
   .version("0.1.0");
 
 program
   .command("init")
-  .description("Setup wizard — create a new HermesOps project")
+  .description("Setup wizard — create a new Company Agents project")
   .action(initCommand);
 
 program
@@ -72,7 +72,7 @@ program
   .description("Push to VPS via SSH + Caddy auto-SSL")
   .action(deployCommand);
 
-// Default: run init when invoked as npx create-hermesops
+// Default: run init when invoked as npx create-company-agents
 if (process.argv.length <= 2) {
   initCommand();
 } else {

@@ -40,7 +40,7 @@ export async function deployCommand(): Promise<void> {
 
   const syncSpinner = ora("Syncing files to remote...").start();
   const rsyncResult = shelljs.exec(
-    `rsync -avz --exclude node_modules --exclude dist -e "ssh -i ${answers.keyPath}" ./ ${answers.host}:~/hermesops/`,
+    `rsync -avz --exclude node_modules --exclude dist -e "ssh -i ${answers.keyPath}" ./ ${answers.host}:~/company-agents/`,
     { silent: true }
   );
 
@@ -52,7 +52,7 @@ export async function deployCommand(): Promise<void> {
 
   const deploySpinner = ora("Starting services on remote...").start();
   const deployResult = shelljs.exec(
-    `ssh -i ${answers.keyPath} ${answers.host} "cd ~/hermesops && docker compose --profile production up -d --build"`,
+    `ssh -i ${answers.keyPath} ${answers.host} "cd ~/company-agents && docker compose --profile production up -d --build"`,
     { silent: true }
   );
 

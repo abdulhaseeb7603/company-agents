@@ -19,7 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, "..", "..");
 
 export async function initCommand(): Promise<void> {
-  console.log(`\n  ${pc.bold("\u26A1 HermesOps")} \u2014 Business Agents for Paperclip\n`);
+  console.log(`\n  ${pc.bold("\u26A1 Company Agents")} \u2014 Business Agents for Paperclip\n`);
 
   const deployTarget = await promptDeployTarget();
   const { provider, apiKey, model } = await promptProvider();

@@ -30,7 +30,7 @@ export function generateDockerCompose(config: ComposeConfig): string {
         timeout: "5s",
         retries: 5,
       },
-      networks: ["internal"],
+      networks: ["internal", "dashboard"],
     },
     "hermes-worker": {
       build: {
@@ -69,7 +69,7 @@ export function generateDockerCompose(config: ComposeConfig): string {
         "./Caddyfile:/etc/caddy/Caddyfile",
         "caddy-data:/data",
       ],
-      networks: ["internal"],
+      networks: ["internal", "dashboard"],
     };
   }
 
@@ -77,6 +77,7 @@ export function generateDockerCompose(config: ComposeConfig): string {
     services,
     networks: {
       internal: { internal: true },
+      dashboard: { driver: "bridge" },
       "llm-egress": { driver: "bridge" },
       "internet-egress": { driver: "bridge" },
     },

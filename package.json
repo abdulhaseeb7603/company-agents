@@ -1,10 +1,10 @@
 {
-  "name": "create-hermesops",
+  "name": "create-company-agents",
   "version": "0.1.0",
   "type": "module",
   "description": "Deploy Hermes Agent as business employees in Paperclip",
   "bin": {
-    "hermesops": "./dist/index.js"
+    "company-agents": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",

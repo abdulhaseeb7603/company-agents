@@ -22,7 +22,7 @@ describe("createHermesHome", () => {
   const soulContent = "# Personality\n\nYou are a content strategist at {{company_name}}.\n\n## Your Role\n\nCreate content for {{company_name}}.";
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "hermesops-test-"));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "company-agents-test-"));
   });
 
   afterEach(async () => {
