@@ -1,0 +1,36 @@
+{
+  "name": "create-hermesops",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Deploy Hermes Agent as business employees in Paperclip",
+  "bin": {
+    "hermesops": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "inquirer": "^9.3.8",
+    "ora": "^8.2.0",
+    "picocolors": "^1.1.1",
+    "shelljs": "^0.8.5",
+    "yaml": "^2.8.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^22.19.15",
+    "@types/shelljs": "^0.8.17",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}
