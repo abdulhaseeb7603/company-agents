@@ -59,10 +59,13 @@ export async function seedCompany(
       role: agentDef.role,
       adapterType: "openclaw_gateway",
       adapterConfig: {
+        url: "ws://zeroclaw:42617/ws/chat",
         model: "anthropic/claude-sonnet-4",
         enabledToolsets: agentDef.toolsets,
+        sessionKeyStrategy: "issue",
         persistSession: true,
         timeoutSec: 300,
+        autoPairOnFirstConnect: true,
       },
       reportsTo: agentDef.reportsTo ? agentMap[agentDef.reportsTo] : undefined,
       budgetMonthlyCents: agentDef.budget * 100,

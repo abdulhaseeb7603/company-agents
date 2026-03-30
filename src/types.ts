@@ -8,11 +8,14 @@ export interface CreateAgentRequest {
   title?: string;
   adapterType: string;
   adapterConfig: {
+    url?: string;
     model?: string;
     maxIterations?: number;
     timeoutSec?: number;
     persistSession?: boolean;
     enabledToolsets?: string[];
+    sessionKeyStrategy?: string;
+    autoPairOnFirstConnect?: boolean;
   };
   reportsTo?: string;
   budgetMonthlyCents?: number;

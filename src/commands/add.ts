@@ -4,7 +4,7 @@ import inquirer from "inquirer";
 import ora from "ora";
 import pc from "picocolors";
 import { PaperclipClient } from "../paperclip/client.js";
-import { createAgentWorkspace } from "../generators/hermes-home.js";
+import { createAgentWorkspace } from "../generators/agent-workspace.js";
 import { fatal } from "../utils/log.js";
 import type { AgentDef } from "../schemas.js";
 
@@ -136,7 +136,10 @@ export async function addCommand(companyId: string): Promise<void> {
       role: agentDef.role,
       adapterType: "openclaw_gateway",
       adapterConfig: {
+        url: "ws://zeroclaw:42617/ws/chat",
         enabledToolsets: agentDef.toolsets,
+        sessionKeyStrategy: "issue",
+        autoPairOnFirstConnect: true,
       },
       budgetMonthlyCents: agentDef.budget * 100,
     });

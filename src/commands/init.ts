@@ -10,7 +10,7 @@ import { promptTemplate } from "../wizard/template.js";
 import { promptInternetTools } from "../wizard/internet.js";
 import { generateDockerCompose } from "../generators/docker-compose.js";
 import { generateEnv } from "../generators/env.js";
-import { createAgentWorkspace } from "../generators/hermes-home.js";
+import { createAgentWorkspace } from "../generators/agent-workspace.js";
 import { PaperclipClient } from "../paperclip/client.js";
 import { seedCompany } from "../paperclip/seeder.js";
 import { fatal } from "../utils/log.js";

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import { createAgentWorkspace } from "../src/generators/hermes-home.js";
+import { createAgentWorkspace } from "../src/generators/agent-workspace.js";
 import type { AgentDef } from "../src/schemas.js";
 
 describe("createAgentWorkspace", () => {
