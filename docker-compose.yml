@@ -12,12 +12,8 @@ services:
       - PAPERCLIP_DEPLOYMENT_MODE=authenticated
       - PAPERCLIP_PUBLIC_URL=${PUBLIC_URL:-http://localhost:3100}
       - ANTHROPIC_API_KEY=${LLM_API_KEY:-}
-      - LLM_API_KEY=${LLM_API_KEY}
-      - DEFAULT_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}
-      - HERMES_HOME=/opt/data
     volumes:
       - paperclip-data:/paperclip
-      - hermes-data:/opt/data
     healthcheck:
       test:
         - CMD
@@ -27,6 +23,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - internal
+  zeroclaw:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.zeroclaw
+    restart: unless-stopped
+    environment:
+      - PROVIDER=${LLM_PROVIDER:-openrouter}
+      - API_KEY=${LLM_API_KEY}
+      - ZEROCLAW_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}
+      - ZEROCLAW_GATEWAY_PORT=42617
+    volumes:
+      - zeroclaw-data:/root/.zeroclaw
+    command:
+      - daemon
+    depends_on:
+      paperclip:
+        condition: service_healthy
     networks:
       - internal
       - llm-egress
@@ -40,4 +55,4 @@ networks:
     driver: bridge
 volumes:
   paperclip-data: null
-  hermes-data: null
+  zeroclaw-data: null

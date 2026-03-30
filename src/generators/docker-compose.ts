@@ -33,7 +33,10 @@ export function generateDockerCompose(config: ComposeConfig): string {
       networks: ["internal"],
     },
     zeroclaw: {
-      image: "ghcr.io/zeroclaw-labs/zeroclaw:latest",
+      build: {
+        context: ".",
+        dockerfile: "docker/Dockerfile.zeroclaw",
+      },
       restart: "unless-stopped",
       environment: [
         "PROVIDER=${LLM_PROVIDER:-openrouter}",

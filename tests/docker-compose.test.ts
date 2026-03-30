@@ -23,10 +23,10 @@ describe("generateDockerCompose", () => {
     expect(parsed.services.paperclip.build.dockerfile).toBe("docker/Dockerfile.paperclip");
   });
 
-  it("includes zeroclaw service using official Docker image", () => {
+  it("includes zeroclaw service built from Dockerfile", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
     expect(parsed.services.zeroclaw).toBeDefined();
-    expect(parsed.services.zeroclaw.image).toBe("ghcr.io/zeroclaw-labs/zeroclaw:latest");
+    expect(parsed.services.zeroclaw.build.dockerfile).toBe("docker/Dockerfile.zeroclaw");
     expect(parsed.services.zeroclaw.command).toContain("daemon");
   });
 
