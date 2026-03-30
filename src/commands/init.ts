@@ -58,10 +58,9 @@ export async function initCommand(): Promise<void> {
   for (const agent of template.agents) {
     const roleMap: Record<string, string> = {
       ceo: "ceo.soul.md",
-      content: "content-writer.soul.md",
-      social: "social-manager.soul.md",
-      research: "researcher.soul.md",
-      outreach: "outreach.soul.md",
+      cmo: "social-manager.soul.md",
+      researcher: "researcher.soul.md",
+      general: "content-writer.soul.md",
     };
     const soulFile = agent.soulTemplate ?? roleMap[agent.role];
     let soulContent: string;

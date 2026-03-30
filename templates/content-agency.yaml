@@ -15,7 +15,7 @@ agents:
 
   - slug: writer
     name: "Content Strategist"
-    role: content
+    role: general
     budget: 80
     heartbeat: "20 8,12,16 * * 1-5"
     toolsets: [terminal, file, web, browser, image_gen, tts]
@@ -27,7 +27,7 @@ agents:
 
   - slug: social
     name: "Social Media Manager"
-    role: social
+    role: cmo
     budget: 40
     heartbeat: "40 9,13,17 * * 1-5"
     toolsets: [terminal, file, web, browser, image_gen, tts]

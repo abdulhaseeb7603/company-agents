@@ -26,7 +26,7 @@ agents:
 
   - slug: outreach
     name: "Outreach Specialist"
-    role: outreach
+    role: general
     budget: 40
     heartbeat: "30 9,14 * * 1-5"
     toolsets: [terminal, file, web, image_gen, todo]

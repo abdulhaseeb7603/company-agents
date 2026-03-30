@@ -15,28 +15,25 @@ export function generateDockerCompose(config: ComposeConfig): string {
         context: ".",
         dockerfile: "docker/Dockerfile.paperclip",
       },
-      ports: [`\${DASHBOARD_PORT:-${config.dashboardPort}}:3100`],
+      network_mode: "host",
       environment: [
-        "HOST=0.0.0.0",
         "PAPERCLIP_HOME=/paperclip",
-        "PAPERCLIP_DEPLOYMENT_MODE=authenticated",
-        "PAPERCLIP_PUBLIC_URL=${PUBLIC_URL:-http://localhost:3100}",
         "ANTHROPIC_API_KEY=${LLM_API_KEY:-}",
       ],
       volumes: ["paperclip-data:/paperclip"],
       healthcheck: {
-        test: ["CMD", "curl", "-sf", "http://localhost:3100/api/health"],
+        test: ["CMD", "curl", "-sf", "http://127.0.0.1:3100/api/health"],
         interval: "10s",
         timeout: "5s",
         retries: 5,
       },
-      networks: ["internal"],
     },
     zeroclaw: {
       build: {
         context: ".",
         dockerfile: "docker/Dockerfile.zeroclaw",
       },
+      network_mode: "host",
       restart: "unless-stopped",
       environment: [
         "PROVIDER=${LLM_PROVIDER:-openrouter}",
@@ -44,20 +41,18 @@ export function generateDockerCompose(config: ComposeConfig): string {
         "ZEROCLAW_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}",
         "ZEROCLAW_GATEWAY_PORT=42617",
       ],
-      volumes: ["zeroclaw-data:/root/.zeroclaw"],
+      volumes: ["zeroclaw-data:/zeroclaw-data"],
       command: ["daemon"],
       depends_on: {
         paperclip: { condition: "service_healthy" },
       },
-      networks: ["internal", "llm-egress", "internet-egress"],
     },
   };
 
   if (config.enableSearxng) {
     services.searxng = {
       image: "searxng/searxng:latest",
-      profiles: ["search"],
-      networks: ["internal", "internet-egress"],
+      network_mode: "host",
     };
   }
 
@@ -65,22 +60,16 @@ export function generateDockerCompose(config: ComposeConfig): string {
     services.caddy = {
       image: "caddy:2-alpine",
       profiles: ["production"],
-      ports: ["80:80", "443:443"],
+      network_mode: "host",
       volumes: [
         "./Caddyfile:/etc/caddy/Caddyfile",
         "caddy-data:/data",
       ],
-      networks: ["internal"],
     };
   }
 
   const compose = {
     services,
-    networks: {
-      internal: { internal: true },
-      "llm-egress": { driver: "bridge" },
-      "internet-egress": { driver: "bridge" },
-    },
     volumes: {
       "paperclip-data": null,
       "zeroclaw-data": null,

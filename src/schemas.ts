@@ -4,8 +4,9 @@ export const AgentDefSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
   role: z.enum([
-    "ceo", "content", "social", "research",
-    "outreach", "engineering", "design", "qa",
+    "ceo", "cto", "cmo", "cfo", "engineer",
+    "designer", "pm", "qa", "devops",
+    "researcher", "general",
   ]),
   soulTemplate: z.string().optional(),
   budget: z.number().min(1).max(500),
