@@ -2,7 +2,13 @@
   "name": "create-company-agents",
   "version": "0.1.0",
   "type": "module",
-  "description": "Deploy Hermes Agent as business employees in Paperclip",
+  "description": "Deploy AI agent teams as business employees with one command",
+  "keywords": ["ai-agents", "paperclip", "zeroclaw", "automation", "company", "orchestration"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdulhaseeb7603/company-agents.git"
+  },
+  "author": "abdulhaseeb7603",
   "bin": {
     "company-agents": "./dist/index.js"
   },
