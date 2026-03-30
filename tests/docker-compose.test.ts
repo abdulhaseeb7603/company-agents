@@ -17,25 +17,22 @@ describe("generateDockerCompose", () => {
     expect(parsed.services).toBeDefined();
   });
 
-  it("includes paperclip service with both Paperclip and Hermes", () => {
+  it("includes paperclip service", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
     expect(parsed.services.paperclip).toBeDefined();
     expect(parsed.services.paperclip.build.dockerfile).toBe("docker/Dockerfile.paperclip");
-    // Single container includes both Paperclip and Hermes env vars
-    expect(parsed.services.paperclip.environment).toContain("HERMES_HOME=/opt/data");
-    expect(parsed.services.paperclip.environment).toContain("LLM_API_KEY=${LLM_API_KEY}");
   });
 
-  it("uses single container architecture (no separate hermes-worker)", () => {
+  it("includes zeroclaw service using official Docker image", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    expect(parsed.services["hermes-worker"]).toBeUndefined();
+    expect(parsed.services.zeroclaw).toBeDefined();
+    expect(parsed.services.zeroclaw.image).toBe("ghcr.io/zeroclaw-labs/zeroclaw:latest");
+    expect(parsed.services.zeroclaw.command).toContain("daemon");
   });
 
-  it("mounts both paperclip-data and hermes-data volumes", () => {
+  it("zeroclaw depends on healthy paperclip", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    const volumes = parsed.services.paperclip.volumes;
-    expect(volumes).toContain("paperclip-data:/paperclip");
-    expect(volumes).toContain("hermes-data:/opt/data");
+    expect(parsed.services.zeroclaw.depends_on.paperclip.condition).toBe("service_healthy");
   });
 
   it("defines three networks", () => {

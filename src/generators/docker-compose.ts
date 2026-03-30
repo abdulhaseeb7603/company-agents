@@ -8,9 +8,6 @@ interface ComposeConfig {
 }
 
 export function generateDockerCompose(config: ComposeConfig): string {
-  // Single container: Paperclip + Hermes Agent + adapter all in one.
-  // The hermes-paperclip-adapter calls `hermes` CLI locally, so both
-  // Node (Paperclip) and Python (Hermes) must be in the same container.
   const services: Record<string, unknown> = {
     paperclip: {
       image: "company-agents-paperclip",
@@ -25,19 +22,29 @@ export function generateDockerCompose(config: ComposeConfig): string {
         "PAPERCLIP_DEPLOYMENT_MODE=authenticated",
         "PAPERCLIP_PUBLIC_URL=${PUBLIC_URL:-http://localhost:3100}",
         "ANTHROPIC_API_KEY=${LLM_API_KEY:-}",
-        "LLM_API_KEY=${LLM_API_KEY}",
-        "DEFAULT_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}",
-        "HERMES_HOME=/opt/data",
       ],
-      volumes: [
-        "paperclip-data:/paperclip",
-        "hermes-data:/opt/data",
-      ],
+      volumes: ["paperclip-data:/paperclip"],
       healthcheck: {
         test: ["CMD", "curl", "-sf", "http://localhost:3100/api/health"],
         interval: "10s",
         timeout: "5s",
         retries: 5,
+      },
+      networks: ["internal"],
+    },
+    zeroclaw: {
+      image: "ghcr.io/zeroclaw-labs/zeroclaw:latest",
+      restart: "unless-stopped",
+      environment: [
+        "PROVIDER=${LLM_PROVIDER:-openrouter}",
+        "API_KEY=${LLM_API_KEY}",
+        "ZEROCLAW_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}",
+        "ZEROCLAW_GATEWAY_PORT=42617",
+      ],
+      volumes: ["zeroclaw-data:/root/.zeroclaw"],
+      command: ["daemon"],
+      depends_on: {
+        paperclip: { condition: "service_healthy" },
       },
       networks: ["internal", "llm-egress", "internet-egress"],
     },
@@ -73,7 +80,7 @@ export function generateDockerCompose(config: ComposeConfig): string {
     },
     volumes: {
       "paperclip-data": null,
-      "hermes-data": null,
+      "zeroclaw-data": null,
       ...(config.enableCaddy ? { "caddy-data": null } : {}),
     },
   };
