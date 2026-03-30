@@ -10,7 +10,7 @@ import { promptTemplate } from "../wizard/template.js";
 import { promptInternetTools } from "../wizard/internet.js";
 import { generateDockerCompose } from "../generators/docker-compose.js";
 import { generateEnv } from "../generators/env.js";
-import { createHermesHome } from "../generators/hermes-home.js";
+import { createAgentWorkspace } from "../generators/hermes-home.js";
 import { PaperclipClient } from "../paperclip/client.js";
 import { seedCompany } from "../paperclip/seeder.js";
 import { fatal } from "../utils/log.js";
@@ -74,12 +74,12 @@ export async function initCommand(): Promise<void> {
     } else {
       soulContent = `# Personality\n\nYou are ${agent.name}, the ${agent.role} at {{company_name}}.`;
     }
-    await createHermesHome("./agents", agent, template.name, soulContent, {
+    await createAgentWorkspace("./agents", agent, template.name, soulContent, {
       model,
       provider,
     });
   }
-  homeSpinner.succeed(`Created ${template.agents.length} agent HERMES_HOME directories`);
+  homeSpinner.succeed(`Created ${template.agents.length} agent workspaces`);
 
   const dockerSpinner = ora("Starting services...").start();
   const upResult = shelljs.exec("docker compose up -d --build", { silent: true });
@@ -87,7 +87,7 @@ export async function initCommand(): Promise<void> {
     dockerSpinner.fail("Docker compose failed");
     fatal(upResult.stderr || "Failed to start services");
   }
-  dockerSpinner.succeed("Started Paperclip + Hermes stack");
+  dockerSpinner.succeed("Started Paperclip + ZeroClaw stack");
 
   const healthSpinner = ora("Waiting for Paperclip to be healthy...").start();
   const apiUrl = "http://localhost:3100";

@@ -15,7 +15,7 @@ const program = new Command();
 
 program
   .name("company-agents")
-  .description("Deploy Hermes Agent as business employees in Paperclip")
+  .description("Deploy AI agent teams as business employees in Paperclip")
   .version("0.1.0");
 
 program

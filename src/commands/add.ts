@@ -4,7 +4,7 @@ import inquirer from "inquirer";
 import ora from "ora";
 import pc from "picocolors";
 import { PaperclipClient } from "../paperclip/client.js";
-import { createHermesHome } from "../generators/hermes-home.js";
+import { createAgentWorkspace } from "../generators/hermes-home.js";
 import { fatal } from "../utils/log.js";
 import type { AgentDef } from "../schemas.js";
 
@@ -118,11 +118,11 @@ export async function addCommand(companyId: string): Promise<void> {
   const spinner = ora("Creating agent directory...").start();
   try {
     const soulContent = `# Personality\n\nYou are ${agentDef.name}.`;
-    await createHermesHome("./agents", agentDef, companyName, soulContent, {
+    await createAgentWorkspace("./agents", agentDef, companyName, soulContent, {
       model: envDefaults["DEFAULT_MODEL"],
       provider: envDefaults["LLM_PROVIDER"],
     });
-    spinner.succeed(`Created HERMES_HOME at ${path.join("agents", agentDef.slug)}`);
+    spinner.succeed(`Created agent workspace at ${path.join("agents", agentDef.slug)}`);
   } catch (error) {
     spinner.fail("Failed to create agent directory");
     fatal(error instanceof Error ? error.message : "Unknown error");
@@ -134,7 +134,7 @@ export async function addCommand(companyId: string): Promise<void> {
     const created = await client.createAgent(companyId, {
       name: agentDef.name,
       role: agentDef.role,
-      adapterType: "hermes",
+      adapterType: "openclaw_gateway",
       adapterConfig: {
         enabledToolsets: agentDef.toolsets,
       },

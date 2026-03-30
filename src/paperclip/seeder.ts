@@ -57,7 +57,7 @@ export async function seedCompany(
     const agent = await client.createAgent(company.id, {
       name: agentDef.name,
       role: agentDef.role,
-      adapterType: "hermes_local",
+      adapterType: "openclaw_gateway",
       adapterConfig: {
         model: "anthropic/claude-sonnet-4",
         enabledToolsets: agentDef.toolsets,

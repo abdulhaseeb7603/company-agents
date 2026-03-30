@@ -68,6 +68,3 @@ export async function createAgentWorkspace(
 
   return configDir;
 }
-
-// Keep backward-compatible export name
-export const createHermesHome = createAgentWorkspace;

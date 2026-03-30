@@ -7,7 +7,7 @@ export function logsCommand(agent: string): void {
   console.log(pc.bold(`\nLogs for agent: ${safeSlug}\n`));
 
   const result = shelljs.exec(
-    `docker compose logs hermes-worker --tail 100 2>&1 | grep -i "${safeSlug}"`,
+    `docker compose logs zeroclaw --tail 100 2>&1 | grep -i "${safeSlug}"`,
     { silent: true }
   );
 
