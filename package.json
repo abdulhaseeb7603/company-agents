@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Deploy AI agent teams as business employees with one command",
-  "keywords": ["ai-agents", "paperclip", "zeroclaw", "automation", "company", "orchestration"],
+  "keywords": ["ai-agents", "paperclip", "openclaw", "automation", "company", "orchestration"],
   "repository": {
     "type": "git",
     "url": "https://github.com/abdulhaseeb7603/company-agents.git"

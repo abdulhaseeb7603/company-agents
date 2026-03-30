@@ -28,21 +28,21 @@ export function generateDockerCompose(config: ComposeConfig): string {
         retries: 5,
       },
     },
-    zeroclaw: {
+    openclaw: {
       build: {
         context: ".",
-        dockerfile: "docker/Dockerfile.zeroclaw",
+        dockerfile: "docker/Dockerfile.openclaw",
       },
       network_mode: "host",
       restart: "unless-stopped",
       environment: [
-        "PROVIDER=${LLM_PROVIDER:-openrouter}",
-        "API_KEY=${LLM_API_KEY}",
-        "ZEROCLAW_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}",
-        "ZEROCLAW_GATEWAY_PORT=42617",
+        "OPENCLAW_PROVIDER=${LLM_PROVIDER:-openrouter}",
+        "OPENROUTER_API_KEY=${LLM_API_KEY}",
+        "OPENCLAW_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4}",
+        "OPENCLAW_GATEWAY_PORT=42617",
       ],
-      volumes: ["zeroclaw-data:/zeroclaw-data"],
-      command: ["daemon"],
+      volumes: ["openclaw-data:/openclaw-data"],
+      command: ["gateway", "run", "--port", "42617"],
       depends_on: {
         paperclip: { condition: "service_healthy" },
       },
@@ -72,7 +72,7 @@ export function generateDockerCompose(config: ComposeConfig): string {
     services,
     volumes: {
       "paperclip-data": null,
-      "zeroclaw-data": null,
+      "openclaw-data": null,
       ...(config.enableCaddy ? { "caddy-data": null } : {}),
     },
   };

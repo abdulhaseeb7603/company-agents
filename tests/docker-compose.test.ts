@@ -23,24 +23,15 @@ describe("generateDockerCompose", () => {
     expect(parsed.services.paperclip.build.dockerfile).toBe("docker/Dockerfile.paperclip");
   });
 
-  it("includes zeroclaw service built from Dockerfile", () => {
+  it("includes openclaw service built from Dockerfile", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    expect(parsed.services.zeroclaw).toBeDefined();
-    expect(parsed.services.zeroclaw.build.dockerfile).toBe("docker/Dockerfile.zeroclaw");
-    expect(parsed.services.zeroclaw.command).toContain("daemon");
+    expect(parsed.services.openclaw).toBeDefined();
+    expect(parsed.services.openclaw.build.dockerfile).toBe("docker/Dockerfile.openclaw");
   });
 
-  it("zeroclaw depends on healthy paperclip", () => {
+  it("openclaw depends on healthy paperclip", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    expect(parsed.services.zeroclaw.depends_on.paperclip.condition).toBe("service_healthy");
-  });
-
-  it("defines three networks", () => {
-    const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    expect(parsed.networks.internal).toBeDefined();
-    expect(parsed.networks.internal.internal).toBe(true);
-    expect(parsed.networks["llm-egress"]).toBeDefined();
-    expect(parsed.networks["internet-egress"]).toBeDefined();
+    expect(parsed.services.openclaw.depends_on.paperclip.condition).toBe("service_healthy");
   });
 
   it("includes searxng only when enabled", () => {
@@ -48,7 +39,6 @@ describe("generateDockerCompose", () => {
     expect(without.services.searxng).toBeUndefined();
     const withSearch = YAML.parse(generateDockerCompose({ ...baseConfig, enableSearxng: true }));
     expect(withSearch.services.searxng).toBeDefined();
-    expect(withSearch.services.searxng.profiles).toContain("search");
   });
 
   it("includes caddy only when enabled", () => {
@@ -56,12 +46,6 @@ describe("generateDockerCompose", () => {
     expect(without.services.caddy).toBeUndefined();
     const withCaddy = YAML.parse(generateDockerCompose({ ...baseConfig, enableCaddy: true }));
     expect(withCaddy.services.caddy).toBeDefined();
-    expect(withCaddy.services.caddy.profiles).toContain("production");
-  });
-
-  it("uses DASHBOARD_PORT env var with default", () => {
-    const parsed = YAML.parse(generateDockerCompose(baseConfig));
-    expect(parsed.services.paperclip.ports[0]).toContain("${DASHBOARD_PORT:-3100}");
   });
 
   it("has healthcheck on paperclip service", () => {

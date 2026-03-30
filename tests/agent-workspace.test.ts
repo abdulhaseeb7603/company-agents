@@ -29,9 +29,9 @@ describe("createAgentWorkspace", () => {
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
 
-  it("creates the correct ZeroClaw directory structure", async () => {
+  it("creates the correct OpenClaw directory structure", async () => {
     await createAgentWorkspace(tmpDir, agent, "Acme Corp", soulContent);
-    const zcDir = path.join(tmpDir, "content-writer", ".zeroclaw");
+    const zcDir = path.join(tmpDir, "content-writer", ".openclaw");
     const wsDir = path.join(zcDir, "workspace");
     expect((await fs.stat(zcDir)).isDirectory()).toBe(true);
     expect((await fs.stat(wsDir)).isDirectory()).toBe(true);
@@ -40,7 +40,7 @@ describe("createAgentWorkspace", () => {
   it("writes IDENTITY.md with agent name and role", async () => {
     await createAgentWorkspace(tmpDir, agent, "Acme Corp", soulContent);
     const content = await fs.readFile(
-      path.join(tmpDir, "content-writer", ".zeroclaw", "workspace", "IDENTITY.md"), "utf-8"
+      path.join(tmpDir, "content-writer", ".openclaw", "workspace", "IDENTITY.md"), "utf-8"
     );
     expect(content).toContain("Content Writer");
     expect(content).toContain("Acme Corp");
@@ -50,7 +50,7 @@ describe("createAgentWorkspace", () => {
   it("writes SOUL.md with company name replaced", async () => {
     await createAgentWorkspace(tmpDir, agent, "Acme Corp", soulContent);
     const content = await fs.readFile(
-      path.join(tmpDir, "content-writer", ".zeroclaw", "workspace", "SOUL.md"), "utf-8"
+      path.join(tmpDir, "content-writer", ".openclaw", "workspace", "SOUL.md"), "utf-8"
     );
     expect(content).toContain("Acme Corp");
     expect(content).not.toContain("{{company_name}}");
@@ -62,7 +62,7 @@ describe("createAgentWorkspace", () => {
       provider: "openrouter",
     });
     const content = await fs.readFile(
-      path.join(tmpDir, "content-writer", ".zeroclaw", "config.toml"), "utf-8"
+      path.join(tmpDir, "content-writer", ".openclaw", "config.toml"), "utf-8"
     );
     expect(content).toContain("anthropic/claude-sonnet-4");
     expect(content).toContain("openrouter");
@@ -70,7 +70,7 @@ describe("createAgentWorkspace", () => {
 
   it("creates empty MEMORY.md and USER.md", async () => {
     await createAgentWorkspace(tmpDir, agent, "Acme Corp", soulContent);
-    const wsDir = path.join(tmpDir, "content-writer", ".zeroclaw", "workspace");
+    const wsDir = path.join(tmpDir, "content-writer", ".openclaw", "workspace");
     const memory = await fs.readFile(path.join(wsDir, "MEMORY.md"), "utf-8");
     const user = await fs.readFile(path.join(wsDir, "USER.md"), "utf-8");
     expect(memory).toBe("");
@@ -90,7 +90,7 @@ describe("createAgentWorkspace", () => {
     };
     await createAgentWorkspace(tmpDir, minimalAgent, "Test Co", "# Personality\nYou are a leader.");
     const content = await fs.readFile(
-      path.join(tmpDir, "basic", ".zeroclaw", "workspace", "SOUL.md"), "utf-8"
+      path.join(tmpDir, "basic", ".openclaw", "workspace", "SOUL.md"), "utf-8"
     );
     expect(content).toContain("You are a leader.");
   });

@@ -8,8 +8,8 @@ interface AgentConfig {
 }
 
 /**
- * Creates a ZeroClaw workspace directory for an agent.
- * Layout: baseDir/<slug>/.zeroclaw/workspace/
+ * Creates an OpenClaw workspace directory for an agent.
+ * Layout: baseDir/<slug>/.openclaw/workspace/
  */
 export async function createAgentWorkspace(
   baseDir: string,
@@ -18,8 +18,8 @@ export async function createAgentWorkspace(
   soulContent: string,
   config: AgentConfig = {}
 ): Promise<string> {
-  const workspaceDir = path.join(baseDir, agent.slug, ".zeroclaw", "workspace");
-  const configDir = path.join(baseDir, agent.slug, ".zeroclaw");
+  const workspaceDir = path.join(baseDir, agent.slug, ".openclaw", "workspace");
+  const configDir = path.join(baseDir, agent.slug, ".openclaw");
 
   await fs.mkdir(workspaceDir, { recursive: true });
 
@@ -45,7 +45,7 @@ export async function createAgentWorkspace(
   // USER.md — empty, agent populates over time
   await fs.writeFile(path.join(workspaceDir, "USER.md"), "", "utf-8");
 
-  // config.toml — ZeroClaw configuration
+  // openclaw.json — OpenClaw configuration
   const model = config.model ?? "anthropic/claude-sonnet-4";
   const provider = config.provider ?? "openrouter";
 

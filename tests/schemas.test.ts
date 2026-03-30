@@ -5,7 +5,7 @@ describe("AgentDefSchema", () => {
   const validAgent = {
     slug: "content-writer",
     name: "Content Writer",
-    role: "content",
+    role: "cmo",
     budget: 80,
     heartbeat: "0 9 * * 1-5",
     toolsets: ["terminal", "file", "web"],

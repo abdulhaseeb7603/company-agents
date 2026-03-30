@@ -136,7 +136,7 @@ export async function addCommand(companyId: string): Promise<void> {
       role: agentDef.role,
       adapterType: "openclaw_gateway",
       adapterConfig: {
-        url: "ws://zeroclaw:42617/ws/chat",
+        url: "ws://127.0.0.1:42617/ws/chat",
         enabledToolsets: agentDef.toolsets,
         sessionKeyStrategy: "issue",
         autoPairOnFirstConnect: true,

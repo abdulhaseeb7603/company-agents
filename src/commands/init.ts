@@ -80,13 +80,23 @@ export async function initCommand(): Promise<void> {
   }
   homeSpinner.succeed(`Created ${template.agents.length} agent workspaces`);
 
+  // Kill any orphan processes from previous runs and ensure ports are free
+  shelljs.exec("docker compose down -v 2>/dev/null", { silent: true });
+  shelljs.exec("killall openclaw 2>/dev/null; sleep 2", { silent: true });
+  // Wait for port 42617 to be fully released
+  for (let i = 0; i < 5; i++) {
+    const portCheck = shelljs.exec("ss -tlnp | grep 42617", { silent: true });
+    if (portCheck.stdout.trim() === "") break;
+    shelljs.exec("fuser -k 42617/tcp 2>/dev/null; sleep 2", { silent: true });
+  }
+
   const dockerSpinner = ora("Starting services...").start();
   const upResult = shelljs.exec("docker compose up -d --build", { silent: true });
   if (upResult.code !== 0) {
     dockerSpinner.fail("Docker compose failed");
     fatal(upResult.stderr || "Failed to start services");
   }
-  dockerSpinner.succeed("Started Paperclip + ZeroClaw stack");
+  dockerSpinner.succeed("Started Paperclip + OpenClaw stack");
 
   const healthSpinner = ora("Waiting for Paperclip to be healthy...").start();
   const apiUrl = "http://localhost:3100";
@@ -109,9 +119,50 @@ export async function initCommand(): Promise<void> {
   }
   healthSpinner.succeed("Paperclip is healthy");
 
+  const zcSpinner = ora("Waiting for OpenClaw gateway...").start();
+  let zcHealthy = false;
+  for (let i = 0; i < 20; i++) {
+    try {
+      const res = await fetch("http://127.0.0.1:42617/");
+      if (res.ok) {
+        zcHealthy = true;
+        break;
+      }
+    } catch {
+      // OpenClaw not ready yet
+    }
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  if (!zcHealthy) {
+    zcSpinner.fail("OpenClaw gateway not responding");
+    fatal("OpenClaw failed to start. Run: docker compose logs openclaw");
+  }
+  zcSpinner.succeed("OpenClaw gateway is ready");
+
+  // Extract gateway auth token from OpenClaw config
+  const tokenSpinner = ora("Reading OpenClaw gateway token...").start();
+  let zcToken = "";
+  try {
+    const logsResult = shelljs.exec(
+      "docker exec company-agents-openclaw-1 cat /openclaw-data/.openclaw/openclaw.json 2>/dev/null",
+      { silent: true }
+    );
+    if (logsResult.stdout.trim()) {
+      const config = JSON.parse(logsResult.stdout) as { gateway?: { token?: string } };
+      zcToken = config?.gateway?.token ?? "";
+    }
+    if (zcToken) {
+      tokenSpinner.succeed("OpenClaw gateway token acquired");
+    } else {
+      tokenSpinner.warn("Could not extract OpenClaw gateway token — agents may need manual config");
+    }
+  } catch {
+    tokenSpinner.warn("OpenClaw token extraction skipped");
+  }
+
   const seedSpinner = ora("Seeding company...").start();
   try {
-    const result = await seedCompany(client, template, apiKey);
+    const result = await seedCompany(client, template, apiKey, zcToken);
     seedSpinner.succeed("Seeded company, agents, org chart, goals");
 
     console.log(`\n  ${pc.green("\uD83C\uDF89")} Dashboard: ${pc.bold(`${apiUrl}`)}`);

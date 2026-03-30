@@ -40,7 +40,8 @@ export async function seedCompany(
     "createAgent" | "createAgentKey" | "createIssue"
   >,
   template: CompanyTemplate,
-  llmApiKey: string
+  llmApiKey: string,
+  openClawToken: string = "",
 ): Promise<SeedResult> {
   const company = await client.createCompany(template.name, template.mission);
   await client.createGoal(company.id, { title: template.mission });
@@ -65,7 +66,7 @@ export async function seedCompany(
         sessionKeyStrategy: "issue",
         persistSession: true,
         timeoutSec: 300,
-        autoPairOnFirstConnect: true,
+        ...(openClawToken ? { authToken: openClawToken } : {}),
       },
       reportsTo: agentDef.reportsTo ? agentMap[agentDef.reportsTo] : undefined,
       budgetMonthlyCents: agentDef.budget * 100,
