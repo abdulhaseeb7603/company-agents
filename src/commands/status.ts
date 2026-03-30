@@ -19,22 +19,28 @@ export async function statusCommand(): Promise<void> {
     fatal(result.stderr || "docker compose ps failed");
   }
 
-  const lines = result.stdout.trim().split("\n").filter(Boolean);
-  const services: DockerService[] = [];
-  for (const line of lines) {
-    try {
-      const parsed: unknown = JSON.parse(line);
-      if (
-        parsed !== null &&
-        typeof parsed === "object" &&
-        "Name" in parsed &&
-        "State" in parsed &&
-        "Status" in parsed
-      ) {
-        services.push(parsed as DockerService);
-      }
-    } catch {
-      // skip non-JSON lines
+  const raw = result.stdout.trim();
+  let services: DockerService[] = [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      services = parsed.filter(
+        (item): item is DockerService =>
+          item !== null && typeof item === "object" && "Name" in item && "State" in item && "Status" in item
+      );
+    } else if (parsed !== null && typeof parsed === "object" && "Name" in parsed && "State" in parsed && "Status" in parsed) {
+      services = [parsed as DockerService];
+    }
+  } catch {
+    // Fallback: try newline-delimited JSON (older Docker Compose)
+    const lines = raw.split("\n").filter(Boolean);
+    for (const line of lines) {
+      try {
+        const parsed: unknown = JSON.parse(line);
+        if (parsed !== null && typeof parsed === "object" && "Name" in parsed && "State" in parsed && "Status" in parsed) {
+          services.push(parsed as DockerService);
+        }
+      } catch { /* skip non-JSON lines */ }
     }
   }
 

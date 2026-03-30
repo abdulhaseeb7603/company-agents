@@ -4,6 +4,8 @@
   "type": "module",
   "description": "Deploy AI agent teams as business employees with one command",
   "keywords": ["ai-agents", "paperclip", "openclaw", "automation", "company", "orchestration"],
+  "homepage": "https://github.com/abdulhaseeb7603/company-agents",
+  "bugs": "https://github.com/abdulhaseeb7603/company-agents/issues",
   "repository": {
     "type": "git",
     "url": "https://github.com/abdulhaseeb7603/company-agents.git"
@@ -17,7 +19,8 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test"
   },
   "engines": {
     "node": ">=20.0.0"

@@ -59,6 +59,18 @@ describe("AgentDefSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects invalid cron expression", () => {
+    const result = AgentDefSchema.safeParse({ ...validAgent, heartbeat: "banana" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid cron expressions", () => {
+    for (const cron of ["*/30 * * * *", "0 9,14 * * 1-5", "0 0 1 * *"]) {
+      const result = AgentDefSchema.safeParse({ ...validAgent, heartbeat: cron });
+      expect(result.success).toBe(true);
+    }
+  });
+
   it("accepts optional reportsTo", () => {
     const result = AgentDefSchema.safeParse({
       ...validAgent,
@@ -120,5 +132,45 @@ describe("CompanyTemplateSchema", () => {
   it("rejects empty agents array", () => {
     const result = CompanyTemplateSchema.safeParse({ ...validTemplate, agents: [] });
     expect(result.success).toBe(false);
+  });
+
+  it("rejects reportsTo referencing non-existent agent", () => {
+    const result = CompanyTemplateSchema.safeParse({
+      ...validTemplate,
+      agents: [
+        ...validTemplate.agents,
+        {
+          slug: "writer",
+          name: "Writer",
+          role: "general",
+          budget: 50,
+          heartbeat: "0 10 * * *",
+          toolsets: ["file"],
+          goals: ["Write content"],
+          reportsTo: "nonexistent-agent",
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid reportsTo references", () => {
+    const result = CompanyTemplateSchema.safeParse({
+      ...validTemplate,
+      agents: [
+        ...validTemplate.agents,
+        {
+          slug: "writer",
+          name: "Writer",
+          role: "general",
+          budget: 50,
+          heartbeat: "0 10 * * *",
+          toolsets: ["file"],
+          goals: ["Write content"],
+          reportsTo: "director",
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
   });
 });

@@ -1,0 +1,14 @@
+src/
+tests/
+test-init.ts
+tsconfig.json
+vitest.config.ts
+.env
+.env.*
+docker-compose.yml
+agents/
+*.test.ts
+*.test.js
+.git
+.gitignore
+node_modules

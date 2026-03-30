@@ -20,7 +20,7 @@ describe("seedCompany", () => {
       {
         slug: "writer",
         name: "Writer",
-        role: "content",
+        role: "cmo",
         budget: 80,
         heartbeat: "0 8 * * 1-5",
         toolsets: ["terminal", "file", "web"],

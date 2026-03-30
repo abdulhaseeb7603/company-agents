@@ -10,6 +10,12 @@ if [ ! -f "$HOME/.openclaw/openclaw.json" ]; then
     --openrouter-api-key "${OPENROUTER_API_KEY:-}" \
     --gateway-port "${OPENCLAW_GATEWAY_PORT:-42617}" \
     --skip-health 2>/dev/null || true
+
+  if [ ! -f "$HOME/.openclaw/openclaw.json" ]; then
+    echo "ERROR: openclaw onboard failed and no config was created."
+    echo "Check your API key and provider settings."
+    exit 1
+  fi
 fi
 
 exec openclaw "$@"

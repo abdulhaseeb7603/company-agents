@@ -64,7 +64,7 @@ export async function addCommand(companyId: string): Promise<void> {
       type: "list",
       name: "role",
       message: "Role:",
-      choices: ["ceo", "content", "social", "research", "outreach", "engineering", "design", "qa"],
+      choices: ["ceo", "cto", "cmo", "cfo", "engineer", "designer", "pm", "qa", "devops", "researcher", "general"],
     },
     {
       type: "checkbox",

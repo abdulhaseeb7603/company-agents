@@ -18,6 +18,14 @@ import { fatal } from "../utils/log.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, "..", "..");
 
+const DASHBOARD_PORT = 3100;
+const GATEWAY_PORT = 42617;
+
+function getProjectName(): string {
+  const cwd = process.cwd();
+  return path.basename(cwd).replace(/[^a-z0-9-]/gi, "").toLowerCase() || "company-agents";
+}
+
 export async function initCommand(): Promise<void> {
   console.log(`\n  ${pc.bold("\u26A1 Company Agents")} \u2014 Business Agents for Paperclip\n`);
 
@@ -37,31 +45,42 @@ export async function initCommand(): Promise<void> {
   const envContent = generateEnv({
     apiKey,
     model,
-    dashboardPort: 3100,
-    publicUrl: deployTarget === "vps" ? "http://localhost:3100" : "http://localhost:3100",
+    provider,
+    dashboardPort: DASHBOARD_PORT,
+    gatewayPort: GATEWAY_PORT,
+    publicUrl: deployTarget === "vps" ? `http://localhost:${DASHBOARD_PORT}` : undefined,
   });
   await fs.writeFile(".env", envContent, "utf-8");
 
   const composeContent = generateDockerCompose({
-    dashboardPort: 3100,
+    dashboardPort: DASHBOARD_PORT,
+    gatewayPort: GATEWAY_PORT,
     internetTools,
     enableSearxng,
     enableCaddy: deployTarget === "vps",
   });
   await fs.writeFile("docker-compose.yml", composeContent, "utf-8");
 
-  spinner.succeed("Generated docker-compose.yml (hardened)");
+  spinner.succeed("Generated docker-compose.yml + .env");
 
   const homeSpinner = ora("Creating agent directories...").start();
   const personasDir = path.join(PACKAGE_ROOT, "personas");
 
+  const roleMap: Record<string, string> = {
+    ceo: "ceo.soul.md",
+    cto: "cto.soul.md",
+    cmo: "social-manager.soul.md",
+    cfo: "cfo.soul.md",
+    engineer: "engineer.soul.md",
+    designer: "designer.soul.md",
+    pm: "pm.soul.md",
+    qa: "qa.soul.md",
+    devops: "devops.soul.md",
+    researcher: "researcher.soul.md",
+    general: "content-writer.soul.md",
+  };
+
   for (const agent of template.agents) {
-    const roleMap: Record<string, string> = {
-      ceo: "ceo.soul.md",
-      cmo: "social-manager.soul.md",
-      researcher: "researcher.soul.md",
-      general: "content-writer.soul.md",
-    };
     const soulFile = agent.soulTemplate ?? roleMap[agent.role];
     let soulContent: string;
     if (soulFile) {
@@ -80,14 +99,22 @@ export async function initCommand(): Promise<void> {
   }
   homeSpinner.succeed(`Created ${template.agents.length} agent workspaces`);
 
-  // Kill any orphan processes from previous runs and ensure ports are free
+  // Tear down previous deployment
   shelljs.exec("docker compose down -v 2>/dev/null", { silent: true });
-  shelljs.exec("killall openclaw 2>/dev/null; sleep 2", { silent: true });
-  // Wait for port 42617 to be fully released
   for (let i = 0; i < 5; i++) {
-    const portCheck = shelljs.exec("ss -tlnp | grep 42617", { silent: true });
-    if (portCheck.stdout.trim() === "") break;
-    shelljs.exec("fuser -k 42617/tcp 2>/dev/null; sleep 2", { silent: true });
+    let portInUse = false;
+    if (process.platform === "win32") {
+      const check = shelljs.exec(`netstat -ano | findstr :${GATEWAY_PORT}`, { silent: true });
+      portInUse = check.stdout.trim() !== "";
+    } else {
+      const check = shelljs.exec(`lsof -ti:${GATEWAY_PORT} 2>/dev/null`, { silent: true });
+      portInUse = check.stdout.trim() !== "";
+      if (portInUse) {
+        shelljs.exec(`lsof -ti:${GATEWAY_PORT} | xargs kill -9 2>/dev/null`, { silent: true });
+      }
+    }
+    if (!portInUse) break;
+    await new Promise(r => setTimeout(r, 1000));
   }
 
   const dockerSpinner = ora("Starting services...").start();
@@ -98,10 +125,10 @@ export async function initCommand(): Promise<void> {
   }
   dockerSpinner.succeed("Started Paperclip + OpenClaw stack");
 
-  const healthSpinner = ora("Waiting for Paperclip to be healthy...").start();
-  const apiUrl = "http://localhost:3100";
+  const apiUrl = `http://localhost:${DASHBOARD_PORT}`;
   const client = new PaperclipClient(apiUrl, "");
 
+  const healthSpinner = ora("Waiting for Paperclip to be healthy...").start();
   let healthy = false;
   for (let i = 0; i < 30; i++) {
     try {
@@ -112,20 +139,20 @@ export async function initCommand(): Promise<void> {
       await new Promise(r => setTimeout(r, 2000));
     }
   }
-
   if (!healthy) {
     healthSpinner.fail("Paperclip health check timeout");
-    fatal("Paperclip failed to start within 60 seconds. Run: docker compose logs paperclip");
+    shelljs.exec("docker compose logs paperclip --tail 20", { silent: false });
+    fatal("Paperclip failed to start within 60 seconds.");
   }
   healthSpinner.succeed("Paperclip is healthy");
 
-  const zcSpinner = ora("Waiting for OpenClaw gateway...").start();
-  let zcHealthy = false;
+  const ocSpinner = ora("Waiting for OpenClaw gateway...").start();
+  let ocHealthy = false;
   for (let i = 0; i < 20; i++) {
     try {
-      const res = await fetch("http://127.0.0.1:42617/");
+      const res = await fetch(`http://127.0.0.1:${GATEWAY_PORT}/`);
       if (res.ok) {
-        zcHealthy = true;
+        ocHealthy = true;
         break;
       }
     } catch {
@@ -133,28 +160,41 @@ export async function initCommand(): Promise<void> {
     }
     await new Promise(r => setTimeout(r, 2000));
   }
-  if (!zcHealthy) {
-    zcSpinner.fail("OpenClaw gateway not responding");
-    fatal("OpenClaw failed to start. Run: docker compose logs openclaw");
+  if (!ocHealthy) {
+    ocSpinner.fail("OpenClaw gateway not responding");
+    shelljs.exec("docker compose logs openclaw --tail 20", { silent: false });
+    fatal("OpenClaw failed to start within 40 seconds.");
   }
-  zcSpinner.succeed("OpenClaw gateway is ready");
+  ocSpinner.succeed("OpenClaw gateway is ready");
 
-  // Extract gateway auth token from OpenClaw config
+  // Extract gateway auth token — use docker compose project name dynamically
   const tokenSpinner = ora("Reading OpenClaw gateway token...").start();
-  let zcToken = "";
+  let ocToken = "";
   try {
-    const logsResult = shelljs.exec(
-      "docker exec company-agents-openclaw-1 cat /openclaw-data/.openclaw/openclaw.json 2>/dev/null",
+    const projectName = getProjectName();
+    const containerName = `${projectName}-openclaw-1`;
+    const configResult = shelljs.exec(
+      `docker exec ${containerName} cat /openclaw-data/.openclaw/openclaw.json 2>/dev/null`,
       { silent: true }
     );
-    if (logsResult.stdout.trim()) {
-      const config = JSON.parse(logsResult.stdout) as { gateway?: { token?: string } };
-      zcToken = config?.gateway?.token ?? "";
+    if (configResult.code !== 0 || !configResult.stdout.trim()) {
+      // Fallback: try docker compose exec
+      const fallback = shelljs.exec(
+        "docker compose exec -T openclaw cat /openclaw-data/.openclaw/openclaw.json 2>/dev/null",
+        { silent: true }
+      );
+      if (fallback.stdout.trim()) {
+        const config = JSON.parse(fallback.stdout) as { gateway?: { auth?: { token?: string } } };
+        ocToken = config?.gateway?.auth?.token ?? "";
+      }
+    } else {
+      const config = JSON.parse(configResult.stdout) as { gateway?: { auth?: { token?: string } } };
+      ocToken = config?.gateway?.auth?.token ?? "";
     }
-    if (zcToken) {
+    if (ocToken) {
       tokenSpinner.succeed("OpenClaw gateway token acquired");
     } else {
-      tokenSpinner.warn("Could not extract OpenClaw gateway token — agents may need manual config");
+      tokenSpinner.warn("Could not extract gateway token — agents may need manual config");
     }
   } catch {
     tokenSpinner.warn("OpenClaw token extraction skipped");
@@ -162,15 +202,16 @@ export async function initCommand(): Promise<void> {
 
   const seedSpinner = ora("Seeding company...").start();
   try {
-    const result = await seedCompany(client, template, apiKey, zcToken);
+    const result = await seedCompany(client, template, apiKey, ocToken, GATEWAY_PORT);
     seedSpinner.succeed("Seeded company, agents, org chart, goals");
 
-    console.log(`\n  ${pc.green("\uD83C\uDF89")} Dashboard: ${pc.bold(`${apiUrl}`)}`);
+    console.log(`\n  ${pc.green("\uD83C\uDF89")} Dashboard: ${pc.bold(apiUrl)}`);
     console.log(`     Agents: ${template.agents.map(a => a.name).join(", ")}`);
     console.log(`     Company: ${template.name}`);
     console.log(`     Company ID: ${result.companyId}\n`);
   } catch (error) {
     seedSpinner.fail("Seeding failed");
+    shelljs.exec("docker compose logs --tail 10", { silent: false });
     fatal(error instanceof Error ? error.message : "Unknown seeding error");
   }
 }

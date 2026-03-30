@@ -7,6 +7,10 @@ import { fatal } from "../utils/log.js";
 
 export async function removeCommand(slug: string): Promise<void> {
   const agentDir = path.resolve("agents", slug);
+  const expectedBase = path.resolve("agents");
+  if (!agentDir.startsWith(expectedBase + path.sep) && agentDir !== expectedBase) {
+    fatal(`Invalid slug: "${slug}" resolves outside the agents directory.`);
+  }
 
   try {
     await fs.access(agentDir);

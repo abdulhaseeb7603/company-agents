@@ -16,6 +16,7 @@ export interface CreateAgentRequest {
     enabledToolsets?: string[];
     sessionKeyStrategy?: string;
     autoPairOnFirstConnect?: boolean;
+    authToken?: string;
   };
   reportsTo?: string;
   budgetMonthlyCents?: number;

@@ -8,18 +8,23 @@ if [ ! -f "$CONFIG" ]; then
   echo "First run — running onboard with defaults..."
   paperclipai onboard --yes --data-dir /paperclip
 
-  # Patch config for Docker: local_trusted + loopback binding
+  # Patch config: bind to all interfaces for Docker network access
   node -e "
     const fs = require('fs');
-    const c = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
+    const configPath = process.argv[1];
+    const c = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    c.server = c.server || {};
     c.server.deploymentMode = 'local_trusted';
     c.server.exposure = 'local';
-    c.server.host = '127.0.0.1';
+    c.server.host = '0.0.0.0';
     c.server.port = 3100;
-    fs.writeFileSync('$CONFIG', JSON.stringify(c, null, 2));
-    console.log('Patched config: local_trusted on 127.0.0.1:3100');
-  "
+    c.server.allowedHostnames = [
+      'localhost', '127.0.0.1', '0.0.0.0',
+      'paperclip', 'openclaw'
+    ];
+    fs.writeFileSync(configPath, JSON.stringify(c, null, 2));
+    console.log('Patched config: local_trusted on 0.0.0.0:3100');
+  " "$CONFIG"
 fi
 
-# Start Paperclip
-exec paperclipai run --data-dir /paperclip "$@"
+exec paperclipai run --data-dir /paperclip --no-repair "$@"

@@ -4,12 +4,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Install OpenClaw globally
-RUN npm install -g openclaw@latest
+# Install OpenClaw — pin to known working version
+RUN npm install -g openclaw@2026.3.28
 
-# Create data directory
-RUN mkdir -p /openclaw-data/.openclaw /openclaw-data/workspace && \
-    chown -R 65534:65534 /openclaw-data
+# Create data directory owned by non-root user
+RUN useradd -m -s /bin/bash -u 1001 openclaw && \
+    mkdir -p /openclaw-data/.openclaw /openclaw-data/workspace && \
+    chown -R openclaw:openclaw /openclaw-data
 
 COPY docker/openclaw-entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
@@ -19,7 +20,11 @@ ENV OPENCLAW_STATE_DIR=/openclaw-data/.openclaw
 ENV OPENCLAW_GATEWAY_PORT=42617
 
 WORKDIR /openclaw-data
+USER openclaw
 EXPOSE 42617
 
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
+  CMD curl -sf http://127.0.0.1:${OPENCLAW_GATEWAY_PORT:-42617}/ || exit 1
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["gateway", "run", "--port", "42617"]
+CMD ["gateway", "run", "--port", "42617", "--host", "0.0.0.0"]

@@ -5,6 +5,7 @@ import { generateDockerCompose } from "../src/generators/docker-compose.js";
 describe("generateDockerCompose", () => {
   const baseConfig = {
     dashboardPort: 3100,
+    gatewayPort: 42617,
     internetTools: [] as string[],
     enableSearxng: false,
     enableCaddy: false,
@@ -34,11 +35,28 @@ describe("generateDockerCompose", () => {
     expect(parsed.services.openclaw.depends_on.paperclip.condition).toBe("service_healthy");
   });
 
+  it("defines three isolated networks", () => {
+    const parsed = YAML.parse(generateDockerCompose(baseConfig));
+    expect(parsed.networks.internal).toBeDefined();
+    expect(parsed.networks.internal.internal).toBe(true);
+    expect(parsed.networks["llm-egress"]).toBeDefined();
+    expect(parsed.networks["internet-egress"]).toBeDefined();
+  });
+
+  it("assigns services to correct networks", () => {
+    const parsed = YAML.parse(generateDockerCompose(baseConfig));
+    expect(parsed.services.paperclip.networks).toContain("internal");
+    expect(parsed.services.paperclip.networks).toContain("llm-egress");
+    expect(parsed.services.openclaw.networks).toContain("internal");
+    expect(parsed.services.paperclip.network_mode).toBeUndefined();
+  });
+
   it("includes searxng only when enabled", () => {
     const without = YAML.parse(generateDockerCompose(baseConfig));
     expect(without.services.searxng).toBeUndefined();
     const withSearch = YAML.parse(generateDockerCompose({ ...baseConfig, enableSearxng: true }));
     expect(withSearch.services.searxng).toBeDefined();
+    expect(withSearch.services.searxng.networks).toContain("internet-egress");
   });
 
   it("includes caddy only when enabled", () => {
@@ -52,5 +70,11 @@ describe("generateDockerCompose", () => {
     const parsed = YAML.parse(generateDockerCompose(baseConfig));
     expect(parsed.services.paperclip.healthcheck).toBeDefined();
     expect(parsed.services.paperclip.healthcheck.test).toContain("curl");
+  });
+
+  it("exposes dashboard port via port mapping", () => {
+    const parsed = YAML.parse(generateDockerCompose(baseConfig));
+    expect(parsed.services.paperclip.ports).toBeDefined();
+    expect(parsed.services.paperclip.ports[0]).toContain("3100");
   });
 });

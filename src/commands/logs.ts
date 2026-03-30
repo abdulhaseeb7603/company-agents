@@ -4,6 +4,9 @@ import { fatal } from "../utils/log.js";
 
 export function logsCommand(agent: string): void {
   const safeSlug = agent.replace(/[^a-z0-9-]/gi, "");
+  if (!safeSlug) {
+    fatal("Invalid agent slug — must contain at least one alphanumeric character.");
+  }
   console.log(pc.bold(`\nLogs for agent: ${safeSlug}\n`));
 
   const result = shelljs.exec(

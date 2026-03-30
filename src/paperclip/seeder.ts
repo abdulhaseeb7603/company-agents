@@ -42,6 +42,7 @@ export async function seedCompany(
   template: CompanyTemplate,
   llmApiKey: string,
   openClawToken: string = "",
+  gatewayPort: number = 42617,
 ): Promise<SeedResult> {
   const company = await client.createCompany(template.name, template.mission);
   await client.createGoal(company.id, { title: template.mission });
@@ -52,16 +53,20 @@ export async function seedCompany(
   });
 
   const agentMap: Record<string, string> = {};
+  const slugs = new Set(template.agents.map(a => a.slug));
   const sortedAgents = topologicalSort(template.agents);
 
   for (const agentDef of sortedAgents) {
+    if (agentDef.reportsTo && !slugs.has(agentDef.reportsTo)) {
+      throw new Error(`Agent "${agentDef.slug}" reportsTo "${agentDef.reportsTo}" which does not exist`);
+    }
+
     const agent = await client.createAgent(company.id, {
       name: agentDef.name,
       role: agentDef.role,
       adapterType: "openclaw_gateway",
       adapterConfig: {
-        url: "ws://127.0.0.1:42617/ws/chat",
-        model: "anthropic/claude-sonnet-4",
+        url: `ws://openclaw:${gatewayPort}/ws/chat`,
         enabledToolsets: agentDef.toolsets,
         sessionKeyStrategy: "issue",
         persistSession: true,

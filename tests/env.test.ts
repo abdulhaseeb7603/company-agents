@@ -17,6 +17,21 @@ describe("generateEnv", () => {
     expect(output).toContain("DASHBOARD_PORT=4000");
   });
 
+  it("includes LLM_PROVIDER", () => {
+    const output = generateEnv({ apiKey: "sk-test", model: "test", provider: "anthropic", dashboardPort: 3100 });
+    expect(output).toContain('LLM_PROVIDER="anthropic"');
+  });
+
+  it("defaults LLM_PROVIDER to openrouter", () => {
+    const output = generateEnv({ apiKey: "sk-test", model: "test", dashboardPort: 3100 });
+    expect(output).toContain('LLM_PROVIDER="openrouter"');
+  });
+
+  it("includes GATEWAY_PORT", () => {
+    const output = generateEnv({ apiKey: "sk-test", model: "test", dashboardPort: 3100, gatewayPort: 9999 });
+    expect(output).toContain("GATEWAY_PORT=9999");
+  });
+
   it("includes PUBLIC_URL when provided", () => {
     const output = generateEnv({ apiKey: "sk-test", model: "test", dashboardPort: 3100, publicUrl: "https://mysite.com" });
     expect(output).toContain('PUBLIC_URL="https://mysite.com"');
