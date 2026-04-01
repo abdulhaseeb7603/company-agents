@@ -4,6 +4,7 @@ import type { PaperclipClient } from "./client.js";
 interface SeedResult {
   companyId: string;
   agentMap: Record<string, string>;
+  agentKeys: Record<string, string>;
 }
 
 function topologicalSort(agents: CompanyTemplate["agents"]): CompanyTemplate["agents"] {
@@ -53,6 +54,7 @@ export async function seedCompany(
   });
 
   const agentMap: Record<string, string> = {};
+  const agentKeys: Record<string, string> = {};
   const slugs = new Set(template.agents.map(a => a.slug));
   const sortedAgents = topologicalSort(template.agents);
 
@@ -77,7 +79,10 @@ export async function seedCompany(
       budgetMonthlyCents: agentDef.budget * 100,
     });
     agentMap[agentDef.slug] = agent.id;
-    await client.createAgentKey(agent.id);
+    const keyResult = await client.createAgentKey(agent.id);
+    if (keyResult?.key) {
+      agentKeys[agentDef.slug] = keyResult.key;
+    }
   }
 
   for (const agentDef of sortedAgents) {
@@ -90,5 +95,5 @@ export async function seedCompany(
     }
   }
 
-  return { companyId: company.id, agentMap };
+  return { companyId: company.id, agentMap, agentKeys };
 }

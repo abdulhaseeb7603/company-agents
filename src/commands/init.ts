@@ -205,6 +205,22 @@ export async function initCommand(): Promise<void> {
     const result = await seedCompany(client, template, apiKey, ocToken, GATEWAY_PORT);
     seedSpinner.succeed("Seeded company, agents, org chart, goals");
 
+    // Write agent API keys to Paperclip workspaces so agents can authenticate heartbeats
+    if (Object.keys(result.agentKeys).length > 0) {
+      const keySpinner = ora("Deploying agent API keys...").start();
+      for (const [slug, agentId] of Object.entries(result.agentMap)) {
+        const token = result.agentKeys[slug];
+        if (!token) continue;
+        const keyJson = JSON.stringify({ token });
+        const wsPath = `/paperclip/instances/default/workspaces/${agentId}`;
+        shelljs.exec(
+          `docker compose exec -T paperclip sh -c 'echo ${JSON.stringify(keyJson)} > ${wsPath}/paperclip-claimed-api-key.json' 2>/dev/null`,
+          { silent: true }
+        );
+      }
+      keySpinner.succeed("Agent API keys deployed to workspaces");
+    }
+
     console.log(`\n  ${pc.green("\uD83C\uDF89")} Dashboard: ${pc.bold(apiUrl)}`);
     console.log(`     Agents: ${template.agents.map(a => a.name).join(", ")}`);
     console.log(`     Company: ${template.name}`);
